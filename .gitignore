@@ -1,0 +1,5 @@
+capture/
+
+airflow_study/data
+airflow_study/logs
+airflow_study/plugins
