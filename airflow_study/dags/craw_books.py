@@ -3,16 +3,34 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from airflow.models import XCom
 from io import StringIO
+from urllib import robotparser
 
 __all__ = ['get_books']
+
+def check_robotstxt(url):
+    # 웹사이트의 robots.txt 파일을 확인하는 함수
+    base_url = '/'.join(url.split('/')[:3])
+    robots_url = f"{base_url}/robots.txt"
+    rp = robotparser.RobotFileParser()
+    rp.set_url(robots_url)
+    rp.read()
+    return rp.can_fetch("*", url)
 
 def get_books(**kwargs):
     daily_top200_book_list = []
     rank = 1
     
+    # 크롤링할 사이트 URL
+    url = 'https://www.yes24.com/Product/Category/BestSeller?categoryNumber=001&pageNumber={page}&pageSize=24'
+
+    # robots.txt를 확인하고 크롤링이 허용되는지 확인
+    if not check_robotstxt(url):
+        print("로봇.txt에 의해 크롤링이 허용되지 않습니다.")
+        return
+
     for page in range(1, 11):
-        url = f'https://www.yes24.com/Product/Category/BestSeller?categoryNumber=001&pageNumber={page}&pageSize=24'
-        response = requests.get(url)
+        full_url = url.format(page=page)
+        response = requests.get(full_url)
         
         if response.status_code == 200:
             html = response.text
